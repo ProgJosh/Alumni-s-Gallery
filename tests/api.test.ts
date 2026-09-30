@@ -49,9 +49,11 @@ describe('submissions and moderation',()=>{
   expect((await req('/api/memories/'+memory.id)).status).toBe(404);
   const mod=await login('mod@example.test','ModeratorDemo2026!');
   const queue:any=await (await req('/api/admin','GET',undefined,mod)).json();
-  expect(queue.verification.length).toBe(1);expect(queue.profiles.length).toBe(1);
+  expect(queue.verification.length).toBe(1);expect(queue.profiles.length).toBe(1);expect(queue.verification[0].evidence).toBe('Visible to school administrators only');
   expect((await req('/api/admin/review','POST',{type:'profile',id:submittedProfile.id,status:'published',note:''},mod)).status).toBe(409);
-  expect((await req('/api/admin/review','POST',{type:'verification',id:queue.verification[0].id,status:'published',note:''},mod)).status).toBe(200);
+  expect((await req('/api/admin/review','POST',{type:'verification',id:queue.verification[0].id,status:'published',note:''},mod)).status).toBe(403);
+  const admin=await login('admin@example.test','AdminDemo2026!');
+  expect((await req('/api/admin/review','POST',{type:'verification',id:queue.verification[0].id,status:'published',note:''},admin)).status).toBe(200);
   expect((await req('/api/admin/review','POST',{type:'profile',id:submittedProfile.id,status:'published',note:''},mod)).status).toBe(200);
   expect((await req('/api/admin/review','POST',{type:'memory',id:memory.id,status:'published',note:''},mod)).status).toBe(200);
   expect((await req('/api/memories/'+memory.id)).status).toBe(200);
@@ -84,6 +86,9 @@ describe('interaction and administration',()=>{
   expect((await req('/api/admin/reports/'+queue.reports[0].id+'/resolve','POST',undefined,admin)).status).toBe(200);
   expect((await req('/api/admin/programs/design','PUT',{name:'Design Studies',short:'Design'},admin)).status).toBe(200);
   expect((await req('/api/admin/batches/2026','PUT',{theme:'New horizons',subtitle:'A new class.'},admin)).status).toBe(200);
+  expect((await req('/api/admin/programs/design','DELETE',undefined,admin)).status).toBe(200);
+  expect((await req('/api/admin/batches/2026','DELETE',undefined,admin)).status).toBe(200);
+  expect((await req('/api/admin/programs/arts','DELETE',undefined,admin)).status).toBe(409);
   expect((await req('/api/bootstrap')).status).toBe(200);
   const mod=await login('mod@example.test','ModeratorDemo2026!');
   expect((await req('/api/admin/programs/denied','PUT',{name:'Denied',short:'No'},mod)).status).toBe(403);
@@ -122,3 +127,43 @@ describe('photo approval and safe delivery',()=>{
  });
 });
 
+
+it('publishes approved keepsakes through the profile and lets the owner remove them',async()=>{
+ const maya=await login('maya-chen@example.test','AlumniDemo2026!');
+ const form=new FormData();
+ form.append('file',new File([new Uint8Array([0xff,0xd8,0xff,0xd9])],'keepsake.jpg',{type:'image/jpeg'}));
+ form.append('alt','Friends outside the library');
+ form.append('caption','Our last day of classes');
+ form.append('context','gallery');
+ const uploaded=await app.request('http://localhost/api/photos',{method:'POST',headers:{cookie:maya},body:form});
+ expect(uploaded.status).toBe(201);
+ const photo=(await uploaded.json() as any).photo;
+ expect((await req('/api/photos/'+photo.id)).status).toBe(404);
+ const mod=await login('mod@example.test','ModeratorDemo2026!');
+ expect((await req('/api/admin/review','POST',{type:'photo',id:photo.id,status:'published',note:''},mod)).status).toBe(200);
+ expect((await req('/api/photos/'+photo.id)).status).toBe(200);
+ const profile=(await (await req('/api/profiles/maya-chen')).json() as any).profile;
+ expect(profile.photos.some((x:{id:string})=>x.id===photo.id)).toBe(true);
+ expect((await req('/api/photos/'+photo.id,'DELETE',undefined,maya)).status).toBe(200);
+ expect((await req('/api/photos/'+photo.id)).status).toBe(404);
+});
+
+
+
+
+it('keeps a saved memory draft private until it is submitted and approved',async()=>{
+ const maya=await login('maya-chen@example.test','AlumniDemo2026!');
+ const draft=await req('/api/memories','POST',{title:'A quiet library afternoon',body:'We studied together by the old library windows.',year:2024,visibility:'public',submit:false},maya);
+ expect(draft.status).toBe(201);
+ const memory=(await draft.json() as any).memory;
+ expect(memory.status).toBe('draft');
+ expect((await req('/api/memories/'+memory.id)).status).toBe(404);
+ const mine:any=await (await req('/api/me', 'GET',undefined,maya)).json();
+ expect(mine.memories.some((item:{id:string;status:string})=>item.id===memory.id&&item.status==='draft')).toBe(true);
+ const submitted=await req('/api/memories/'+memory.id,'PUT',{title:memory.title,body:memory.body,year:2024,visibility:'public',submit:true},maya);
+ expect(submitted.status).toBe(200);
+ expect((await submitted.json() as any).memory.status).toBe('pending');
+ const mod=await login('mod@example.test','ModeratorDemo2026!');
+ expect((await req('/api/admin/review','POST',{type:'memory',id:memory.id,status:'published',note:''},mod)).status).toBe(200);
+ expect((await req('/api/memories/'+memory.id)).status).toBe(200);
+});

@@ -13,6 +13,7 @@ export interface Store {
   batches(): Promise<Batch[]>;
   programs(): Promise<Program[]>;
   saveBatch(batch: Batch): Promise<void>;
+  deleteBatch(year:number):Promise<void>;
   saveProgram(program: Program): Promise<void>;
   deleteProgram(id: string): Promise<void>;
   profiles(): Promise<Profile[]>;
@@ -56,6 +57,7 @@ export class MemoryStore implements Store {
   async batches(){return clone(this.batchRows)}
   async programs(){return clone(this.programRows)}
   async saveBatch(x:Batch){this.batchRows=this.batchRows.filter(v=>v.year!==x.year).concat(clone(x)).sort((a,b)=>b.year-a.year)}
+  async deleteBatch(year:number){this.batchRows=this.batchRows.filter(x=>x.year!==year)}
   async saveProgram(x:Program){this.programRows=this.programRows.filter(v=>v.id!==x.id).concat(clone(x))}
   async deleteProgram(id:string){this.programRows=this.programRows.filter(v=>v.id!==id)}
   async profiles(){return clone(this.profileRows)}
@@ -81,6 +83,3 @@ export class MemoryStore implements Store {
   async hasReacted(id:string,userId:string){return this.reactions.has(id+':'+userId)}
   async toggleReaction(id:string,userId:string){const key=id+':'+userId;if(this.reactions.has(key)){this.reactions.delete(key);return false}this.reactions.add(key);return true}
 }
-
-
-

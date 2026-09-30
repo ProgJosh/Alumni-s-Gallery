@@ -16,6 +16,7 @@ export class PgStore implements Store {
   async batches(){const r=await this.sql`SELECT year,theme,subtitle,cover_key FROM batches ORDER BY year DESC`;return r.map(x=>({year:x.year,theme:x.theme,subtitle:x.subtitle,cover:x.cover_key||undefined})) as Batch[]}
   async programs(){const r=await this.sql`SELECT id,name,short FROM programs ORDER BY name`;return r as unknown as Program[]}
   async saveBatch(x:Batch){await this.sql`INSERT INTO batches (year,theme,subtitle,cover_key) VALUES (${x.year},${x.theme},${x.subtitle},${x.cover||null}) ON CONFLICT (year) DO UPDATE SET theme=EXCLUDED.theme,subtitle=EXCLUDED.subtitle,cover_key=EXCLUDED.cover_key`}
+  async deleteBatch(year:number){await this.sql`DELETE FROM batches WHERE year=${year}`}
   async saveProgram(x:Program){await this.sql`INSERT INTO programs (id,name,short) VALUES (${x.id},${x.name},${x.short}) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,short=EXCLUDED.short`}
   async deleteProgram(id:string){await this.sql`DELETE FROM programs WHERE id=${id}`}
   async directory(query:{q:string;year:number;program:string;sort:string;page:number;viewer:Viewer}):Promise<DirectoryResponse>{
@@ -46,8 +47,3 @@ export class PgStore implements Store {
 }
 function mapUser(x: Record<string,unknown>|undefined):UserRecord|null {return x?{id:String(x.id),email:String(x.email),name:String(x.name),role:x.role as UserRecord['role'],verified:Boolean(x.verified),passwordHash:String(x.password_hash)}:null}
 export const connect = (connectionString:string) => postgres(connectionString,{max:5,fetch_types:false,prepare:true});
-
-
-
-
-

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="64" viewBox="0 0 260 64" role="img" aria-label="Alumni Gallery">
+  <rect width="64" height="64" rx="14" fill="#173c33"/>
+  <path d="M12 20.5c6.8-3.5 14.1-2.7 20 2.2v24.8c-5.9-4.9-13.2-5.7-20-2.2V20.5ZM52 20.5c-6.8-3.5-14.1-2.7-20 2.2v24.8c5.9-4.9 13.2-5.7 20-2.2V20.5Z" fill="#f7f3e9"/>
+  <path d="M32 23v24" stroke="#c19a64" stroke-width="2" stroke-linecap="round"/>
+  <path d="m32 7 1.4 4.9L38.3 13l-4.9 1.4L32 19.3l-1.4-4.9L25.7 13l4.9-1.1L32 7Z" fill="#d6b77e"/>
+  <circle cx="32" cy="54" r="2" fill="#d6b77e"/>
+  <text x="80" y="29" fill="#173c33" font-family="Georgia, serif" font-size="26">Alumni</text>
+  <text x="80" y="55" fill="#173c33" font-family="Georgia, serif" font-size="26" font-style="italic">Gallery</text>
+</svg>

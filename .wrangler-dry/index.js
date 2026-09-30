@@ -1055,14 +1055,14 @@ var Hono = class Hono2 {
     this.getPath = strict ?? true ? options.getPath ?? getPath : getPathNoStrict;
   }
   #clone() {
-    const clone2 = new Hono2({
+    const clone3 = new Hono2({
       router: this.router,
       getPath: this.getPath
     });
-    clone2.errorHandler = this.errorHandler;
-    clone2.#notFoundHandler = this.#notFoundHandler;
-    clone2.routes = this.routes;
-    return clone2;
+    clone3.errorHandler = this.errorHandler;
+    clone3.#notFoundHandler = this.#notFoundHandler;
+    clone3.routes = this.routes;
+    return clone3;
   }
   #notFoundHandler = notFoundHandler;
   errorHandler = errorHandler;
@@ -15179,9 +15179,9 @@ __name(compileValidator, "compileValidator");
 function compile(schema, options) {
   try {
     const parser = compileFn(schema);
-    const clone2 = withParser(schema, parser);
-    clone2._zod.bag.validator = compileValidator(schema, parser);
-    return clone2;
+    const clone3 = withParser(schema, parser);
+    clone3._zod.bag.validator = compileValidator(schema, parser);
+    return clone3;
   } catch (err) {
     if (options?.strict)
       throw err;
@@ -15193,7 +15193,7 @@ function withParser(schema, parser) {
   if (isRecursiveSchema(schema)) {
     throw new ZodCompileUnsupportedError("a schema whose subtree contains a reference cycle");
   }
-  const clone2 = clone(schema);
+  const clone3 = clone(schema);
   const liveRun = schema._zod.run;
   const originalRun = liveRun.__originalRun ?? liveRun;
   const wrapped = /* @__PURE__ */ __name((payload, ctx) => {
@@ -15213,12 +15213,12 @@ function withParser(schema, parser) {
     return originalRun(payload, ctx);
   }, "wrapped");
   wrapped.__originalRun = originalRun;
-  clone2._zod.bag.fallbackRun = originalRun;
-  clone2._zod.bag.validator = parser;
-  clone2._zod.run = wrapped;
+  clone3._zod.bag.fallbackRun = originalRun;
+  clone3._zod.bag.validator = parser;
+  clone3._zod.run = wrapped;
   if (!liveRun.__originalRun)
-    installCompiledUserMethods(clone2, schema, parser);
-  return clone2;
+    installCompiledUserMethods(clone3, schema, parser);
+  return clone3;
 }
 __name(withParser, "withParser");
 function installCompiledUserMethods(target, source, parser) {
@@ -22293,7 +22293,7 @@ var newToken = /* @__PURE__ */ __name(() => hex3(crypto.getRandomValues(new Uint
 // server/api.ts
 var visibility = external_exports.enum(["public", "alumni", "hidden"]);
 var profileInput = external_exports.object({ name: external_exports.string().trim().min(2).max(80), year: external_exports.number().int().min(1900).max(2100), programId: external_exports.string().min(1), motto: external_exports.string().trim().min(2).max(180), bio: external_exports.string().trim().max(1200), visibility, portrait: external_exports.string().max(300).optional(), links: external_exports.array(external_exports.string().url().max(300)).max(3).default([]) });
-var memoryInput = external_exports.object({ title: external_exports.string().trim().min(3).max(120), body: external_exports.string().trim().min(10).max(3e3), year: external_exports.number().int().min(1900).max(2100), schoolYear: external_exports.string().trim().max(40).optional(), visibility, image: external_exports.string().max(300).optional(), caption: external_exports.string().trim().max(180).optional() });
+var memoryInput = external_exports.object({ title: external_exports.string().trim().min(3).max(120), body: external_exports.string().trim().min(10).max(3e3), year: external_exports.number().int().min(1900).max(2100), schoolYear: external_exports.string().trim().max(40).optional(), visibility, image: external_exports.string().max(300).optional(), caption: external_exports.string().trim().max(180).optional(), submit: external_exports.boolean().default(true) });
 var registerInput = external_exports.object({ name: external_exports.string().trim().min(2).max(80), email: external_exports.email().max(254), password: external_exports.string().min(12).max(128), year: external_exports.number().int(), programId: external_exports.string(), evidence: external_exports.string().trim().min(12).max(1e3) });
 var reviewInput = external_exports.object({ type: external_exports.enum(["verification", "profile", "memory", "photo", "comment"]), id: external_exports.string(), status: external_exports.enum(["published", "rejected"]), note: external_exports.string().trim().max(500).default("") });
 var msg = /* @__PURE__ */ __name((error62) => ({ error: error62 }), "msg");
@@ -22319,6 +22319,7 @@ function audited(s, actor, action, target) {
 }
 __name(audited, "audited");
 function createApi(factory, options) {
+  const isDemo = /* @__PURE__ */ __name((c) => typeof options.demo === "function" ? options.demo(c) : options.demo, "isDemo");
   const app2 = new Hono3();
   app2.onError((e, c) => {
     if (e instanceof external_exports.ZodError) return c.json(msg(e.issues.map((x) => x.message).join("; ")), 400);
@@ -22334,16 +22335,17 @@ function createApi(factory, options) {
   });
   app2.get("/api/health", async (c) => {
     await factory(c).batches();
-    return c.json({ ok: true, mode: options.demo ? "demo" : "production" });
+    return c.json({ ok: true, mode: isDemo(c) ? "demo" : "production" });
   });
   app2.get("/api/bootstrap", async (c) => {
     const s = factory(c), v = await viewer(c, s), bs = await s.batches(), ps = await s.programs(), all = await s.memories(), prof = await s.profiles();
-    return c.json({ viewer: v, batches: bs, programs: ps, featured: all.filter((x) => x.featured && visibleMemory(x, v)).slice(0, 3), stats: { alumni: prof.filter((x) => visibleProfile(x, v)).length, years: bs.length, memories: all.filter((x) => visibleMemory(x, v)).length }, demo: options.demo });
+    return c.json({ viewer: v, batches: bs, programs: ps, featured: all.filter((x) => x.featured && visibleMemory(x, v)).slice(0, 3), stats: { alumni: prof.filter((x) => visibleProfile(x, v)).length, years: bs.length, memories: all.filter((x) => visibleMemory(x, v)).length }, demo: isDemo(c) });
   });
   app2.get("/api/me", async (c) => {
     const s = factory(c), v = await viewer(c, s);
     if (!v) return c.json(msg("Sign in required"), 401);
-    return c.json({ viewer: v, profile: (await s.profiles()).find((x) => x.userId === v.id) || null, memories: (await s.memories()).filter((x) => x.ownerId === v.id), verification: (await s.verifications()).find((x) => x.userId === v.id) || null });
+    const own2 = (await s.profiles()).find((x) => x.userId === v.id), photos = (await s.photos()).filter((x) => x.ownerId === v.id && x.context === "gallery" && x.status !== "archived");
+    return c.json({ viewer: v, profile: own2 ? { ...own2, photos } : null, memories: (await s.memories()).filter((x) => x.ownerId === v.id), verification: (await s.verifications()).find((x) => x.userId === v.id) || null });
   });
   app2.post("/api/auth/register", async (c) => {
     const s = factory(c), x = await body(c, registerInput), email3 = x.email.toLowerCase();
@@ -22378,7 +22380,7 @@ function createApi(factory, options) {
   async function signIn(c, s, u) {
     const token = newToken();
     await s.putSession({ tokenHash: await hashToken(token), userId: u.id, expiresAt: new Date(Date.now() + 7 * 864e5).toISOString() });
-    setCookie(c, "ag_session", token, { httpOnly: true, secure: !options.demo, sameSite: "Strict", path: "/", maxAge: 7 * 86400 });
+    setCookie(c, "ag_session", token, { httpOnly: true, secure: !isDemo(c), sameSite: "Strict", path: "/", maxAge: 7 * 86400 });
   }
   __name(signIn, "signIn");
   app2.get("/api/profiles", async (c) => {
@@ -22391,7 +22393,7 @@ function createApi(factory, options) {
   app2.get("/api/profiles/:id", async (c) => {
     const s = factory(c), v = await viewer(c, s), p = (await s.profiles()).find((x) => x.id === c.req.param("id"));
     if (!p || !(visibleProfile(p, v) || v && (v.id === p.userId || canModerate(v)))) return c.json(msg("Profile not found"), 404);
-    const photos = (await s.photos()).filter((x) => x.ownerId === p.userId && (x.status === "published" || v && (v.id === p.userId || canModerate(v))));
+    const photos = (await s.photos()).filter((x) => x.ownerId === p.userId && x.context === "gallery" && (x.status === "published" || v && (v.id === p.userId || canModerate(v))));
     return c.json({ profile: { ...p, photos }, memories: (await s.memories()).filter((x) => x.ownerId === p.userId && visibleMemory(x, v)) });
   });
   app2.get("/api/batches/:year", async (c) => {
@@ -22408,7 +22410,7 @@ function createApi(factory, options) {
   app2.get("/api/memories/:id", async (c) => {
     const s = factory(c), v = await viewer(c, s), m = (await s.memories()).find((x) => x.id === c.req.param("id"));
     if (!m || !(visibleMemory(m, v) || v && (v.id === m.ownerId || canModerate(v)))) return c.json(msg("Memory not found"), 404);
-    return c.json({ memory: { ...m, reactionCount: await s.reactionCount(m.id), reacted: v ? await s.hasReacted(m.id, v.id) : false }, comments: (await s.comments(m.id)).filter((x) => x.status === "published" || v && (x.userId === v.id || canModerate(v))) });
+    return c.json({ memory: { ...m, reactionCount: await s.reactionCount(m.id), reacted: v ? await s.hasReacted(m.id, v.id) : false }, authorProfileId: (await s.profiles()).find((p) => p.userId === m.ownerId && visibleProfile(p, v))?.id, comments: (await s.comments(m.id)).filter((x) => x.status === "published" || v && (x.userId === v.id || canModerate(v))) });
   });
   app2.put("/api/me/profile", async (c) => {
     const s = factory(c), v = await viewer(c, s);
@@ -22419,6 +22421,7 @@ function createApi(factory, options) {
     if (x.portrait && x.portrait !== old?.portrait && !await ownedPhoto(s, x.portrait, v.id)) return c.json(msg("Choose a photo you uploaded."), 400);
     const p = { id: old?.id || id(), userId: v.id, ...x, status: "pending" };
     await s.saveProfile(p);
+    if (old?.portrait && old.portrait !== p.portrait) await retirePhoto(s, old.portrait, v.id);
     await audited(s, v.id, "profile submitted", p.id);
     return c.json({ profile: p });
   });
@@ -22428,9 +22431,10 @@ function createApi(factory, options) {
     const x = await body(c, memoryInput);
     if (!(await s.batches()).some((b2) => b2.year === x.year)) return c.json(msg("Choose a listed graduation year."), 400);
     if (x.image && !await ownedPhoto(s, x.image, v.id)) return c.json(msg("Choose a photo you uploaded."), 400);
-    const m = { id: id(), ownerId: v.id, author: v.name, ...x, status: "pending", featured: false, createdAt: (/* @__PURE__ */ new Date()).toISOString(), reactionCount: 0, commentCount: 0 };
+    const { submit, ...content } = x;
+    const m = { id: id(), ownerId: v.id, author: v.name, ...content, status: submit ? "pending" : "draft", featured: false, createdAt: (/* @__PURE__ */ new Date()).toISOString(), reactionCount: 0, commentCount: 0 };
     await s.saveMemory(m);
-    await audited(s, v.id, "memory submitted", m.id);
+    await audited(s, v.id, submit ? "memory submitted" : "memory drafted", m.id);
     return c.json({ memory: m }, 201);
   });
   app2.put("/api/memories/:id", async (c) => {
@@ -22440,9 +22444,11 @@ function createApi(factory, options) {
     if (!m || m.ownerId !== v.id) return c.json(msg("Memory not found"), 404);
     const x = await body(c, memoryInput);
     if (x.image && x.image !== m.image && !await ownedPhoto(s, x.image, v.id)) return c.json(msg("Choose a photo you uploaded."), 400);
-    const updated = { ...m, ...x, status: "pending", featured: false, reviewNote: "" };
+    const { submit, ...content } = x;
+    const updated = { ...m, ...content, status: submit ? "pending" : "draft", featured: false, reviewNote: "" };
     await s.saveMemory(updated);
-    await audited(s, v.id, "memory edited", m.id);
+    if (m.image && m.image !== updated.image) await retirePhoto(s, m.image, v.id);
+    await audited(s, v.id, submit ? "memory submitted" : "memory drafted", m.id);
     return c.json({ memory: updated });
   });
   app2.delete("/api/memories/:id", async (c) => {
@@ -22451,6 +22457,7 @@ function createApi(factory, options) {
     const m = (await s.memories()).find((x) => x.id === c.req.param("id"));
     if (!m || m.ownerId !== v.id) return c.json(msg("Memory not found"), 404);
     await s.saveMemory({ ...m, status: "archived", featured: false });
+    if (m.image) await retirePhoto(s, m.image, v.id);
     await audited(s, v.id, "memory archived", m.id);
     return c.json({ ok: true });
   });
@@ -22462,7 +22469,9 @@ function createApi(factory, options) {
     if (!["image/jpeg", "image/png", "image/webp"].includes(file2.type) || file2.size > 5 * 1024 * 1024 || file2.size === 0) return c.json(msg("Use a JPG, PNG, or WebP image under 5 MB."), 400);
     const bytes2 = await file2.arrayBuffer();
     if (!validImage(new Uint8Array(bytes2), file2.type)) return c.json(msg("The file does not match its image type."), 400);
-    const key = v.id + "/" + id() + "." + (file2.type === "image/png" ? "png" : file2.type === "image/webp" ? "webp" : "jpg"), photo = { id: id(), ownerId: v.id, key, alt: String(form.get("alt") || "").slice(0, 180), caption: String(form.get("caption") || "").slice(0, 180), status: "pending", visibility: "hidden" };
+    const context = external_exports.enum(["portrait", "memory", "gallery"]).parse(String(form.get("context") || "portrait")), alt = String(form.get("alt") || "").trim().slice(0, 180);
+    if (alt.length < 2) return c.json(msg("Describe the photo for accessibility."), 400);
+    const key = v.id + "/" + id() + "." + (file2.type === "image/png" ? "png" : file2.type === "image/webp" ? "webp" : "jpg"), photo = { id: id(), ownerId: v.id, key, context, alt, caption: String(form.get("caption") || "").slice(0, 180), status: "pending", visibility: "hidden" };
     if (!s.putPhotoBytes) return c.json(msg("Photo storage is unavailable."), 503);
     await s.putPhotoBytes(key, bytes2, file2.type);
     await s.savePhoto(photo);
@@ -22473,11 +22482,23 @@ function createApi(factory, options) {
     const s = factory(c), v = await viewer(c, s), p = (await s.photos()).find((x) => x.id === c.req.param("id"));
     if (!p) return c.json(msg("Photo not found"), 404);
     const owner = !!v && (v.id === p.ownerId || canModerate(v));
-    const referenced = (await s.profiles()).some((x) => x.portrait === "/api/photos/" + p.id && visibleProfile(x, v)) || (await s.memories()).some((x) => x.image === "/api/photos/" + p.id && visibleMemory(x, v));
+    const referenced = (await s.profiles()).some((x) => (x.portrait === "/api/photos/" + p.id || p.context === "gallery" && x.userId === p.ownerId) && visibleProfile(x, v)) || (await s.memories()).some((x) => x.image === "/api/photos/" + p.id && visibleMemory(x, v));
     if (!owner && !(p.status === "published" && referenced && canView(p.visibility, p.ownerId, v))) return c.json(msg("Photo not found"), 404);
     const blob = await s.photoBytes?.(p.key);
     if (!blob) return c.json(msg("Photo unavailable"), 404);
     return new Response(blob.data, { headers: { "content-type": blob.type, "cache-control": "private, no-store", "x-content-type-options": "nosniff" } });
+  });
+  app2.delete("/api/photos/:id", async (c) => {
+    const s = factory(c), v = await viewer(c, s);
+    if (!v) return c.json(msg("Sign in required"), 401);
+    const p = (await s.photos()).find((x) => x.id === c.req.param("id") && x.ownerId === v.id);
+    if (!p) return c.json(msg("Photo not found"), 404);
+    const used = (await s.profiles()).some((x) => x.portrait === "/api/photos/" + p.id && x.status !== "archived") || (await s.memories()).some((x) => x.image === "/api/photos/" + p.id && x.status !== "archived");
+    if (used) return c.json(msg("Remove this photo from the profile or memory first."), 409);
+    await s.savePhoto({ ...p, status: "archived" });
+    await s.deletePhotoBytes?.(p.key);
+    await audited(s, v.id, "photo removed", p.id);
+    return c.json({ ok: true });
   });
   app2.post("/api/memories/:id/react", async (c) => {
     const s = factory(c), v = await viewer(c, s);
@@ -22504,7 +22525,11 @@ function createApi(factory, options) {
     let exists = false;
     if (x.targetType === "memory") exists = (await s.memories()).some((y) => y.id === x.targetId && visibleMemory(y, v));
     if (x.targetType === "profile") exists = (await s.profiles()).some((y) => y.id === x.targetId && visibleProfile(y, v));
-    if (x.targetType === "comment") exists = (await s.comments()).some((y) => y.id === x.targetId && y.status === "published");
+    if (x.targetType === "comment") {
+      const comment = (await s.comments()).find((y) => y.id === x.targetId && y.status === "published");
+      const parent = comment ? (await s.memories()).find((y) => y.id === comment.memoryId) : null;
+      exists = !!parent && visibleMemory(parent, v);
+    }
     if (!exists) return c.json(msg("Content not found"), 404);
     const report = { id: id(), ...x, reporterId: v.id, status: "open", createdAt: (/* @__PURE__ */ new Date()).toISOString() };
     await s.saveReport(report);
@@ -22515,12 +22540,13 @@ function createApi(factory, options) {
     const s = factory(c), v = await viewer(c, s);
     if (!canModerate(v)) return c.json(msg("Forbidden"), 403);
     const [vs, ps, ms, cs, photos, reports, audits, users] = await Promise.all([s.verifications(), s.profiles(), s.memories(), s.comments(), s.photos(), s.reports(), s.audits(), s.profiles()]);
-    return c.json({ verification: vs.filter((x) => x.status === "pending"), profiles: ps.filter((x) => x.status === "pending"), memories: ms.filter((x) => x.status === "pending"), comments: cs.filter((x) => x.status === "pending"), photos: photos.filter((x) => x.status === "pending"), reports: reports.filter((x) => x.status === "open"), featureable: ms.filter((x) => x.status === "published" && x.visibility === "public"), audit: audits, stats: { profiles: users.filter((x) => x.status === "published").length, memories: ms.filter((x) => x.status === "published").length, pending: vs.filter((x) => x.status === "pending").length + ps.filter((x) => x.status === "pending").length + ms.filter((x) => x.status === "pending").length + cs.filter((x) => x.status === "pending").length + photos.filter((x) => x.status === "pending").length } });
+    return c.json({ verification: vs.filter((x) => x.status === "pending").map((x) => v?.role === "administrator" ? x : { ...x, evidence: "Visible to school administrators only" }), profiles: ps.filter((x) => x.status === "pending"), memories: ms.filter((x) => x.status === "pending"), comments: cs.filter((x) => x.status === "pending"), photos: photos.filter((x) => x.status === "pending"), reports: reports.filter((x) => x.status === "open"), featureable: ms.filter((x) => x.status === "published" && x.visibility === "public"), audit: audits, stats: { profiles: users.filter((x) => x.status === "published").length, memories: ms.filter((x) => x.status === "published").length, pending: vs.filter((x) => x.status === "pending").length + ps.filter((x) => x.status === "pending").length + ms.filter((x) => x.status === "pending").length + cs.filter((x) => x.status === "pending").length + photos.filter((x) => x.status === "pending").length } });
   });
   app2.post("/api/admin/review", async (c) => {
     const s = factory(c), v = await viewer(c, s);
     if (!canModerate(v)) return c.json(msg("Forbidden"), 403);
     const x = await body(c, reviewInput);
+    if (x.type === "verification" && v?.role !== "administrator") return c.json(msg("Administrator approval required"), 403);
     let ownerId = "";
     if (x.type === "verification") {
       const row = (await s.verifications()).find((y) => y.id === x.id);
@@ -22597,6 +22623,15 @@ function createApi(factory, options) {
     await audited(s, v.id, "batch saved", String(year));
     return c.json({ ok: true });
   });
+  app2.delete("/api/admin/batches/:year", async (c) => {
+    const s = factory(c), v = await viewer(c, s);
+    if (v?.role !== "administrator") return c.json(msg("Forbidden"), 403);
+    const year = Number(c.req.param("year"));
+    if ((await s.profiles()).some((x) => x.year === year) || (await s.memories()).some((x) => x.year === year) || (await s.verifications()).some((x) => x.year === year)) return c.json(msg("This year has alumni submissions."), 409);
+    await s.deleteBatch(year);
+    await audited(s, v.id, "batch removed", String(year));
+    return c.json({ ok: true });
+  });
   app2.put("/api/admin/programs/:id", async (c) => {
     const s = factory(c), v = await viewer(c, s);
     if (v?.role !== "administrator") return c.json(msg("Forbidden"), 403);
@@ -22610,7 +22645,7 @@ function createApi(factory, options) {
     const s = factory(c), v = await viewer(c, s);
     if (v?.role !== "administrator") return c.json(msg("Forbidden"), 403);
     const name = c.req.param("id");
-    if ((await s.profiles()).some((x) => x.programId === name)) return c.json(msg("This program is used by alumni profiles."), 409);
+    if ((await s.profiles()).some((x) => x.programId === name) || (await s.verifications()).some((x) => x.programId === name)) return c.json(msg("This program is used by alumni submissions."), 409);
     await s.deleteProgram(name);
     await audited(s, v.id, "program removed", name);
     return c.json({ ok: true });
@@ -22624,12 +22659,183 @@ function validImage(data, type) {
   return data.length > 12 && String.fromCharCode(...data.slice(0, 4)) === "RIFF" && String.fromCharCode(...data.slice(8, 12)) === "WEBP";
 }
 __name(validImage, "validImage");
+async function retirePhoto(s, url2, userId) {
+  if (!url2.startsWith("/api/photos/")) return;
+  const photo = (await s.photos()).find((x) => x.id === url2.slice("/api/photos/".length) && x.ownerId === userId);
+  if (!photo) return;
+  const used = (await s.profiles()).some((x) => x.status !== "archived" && x.portrait === url2) || (await s.memories()).some((x) => x.status !== "archived" && x.image === url2);
+  if (used) return;
+  await s.savePhoto({ ...photo, status: "archived" });
+  await s.deletePhotoBytes?.(photo.key);
+}
+__name(retirePhoto, "retirePhoto");
 async function ownedPhoto(s, url2, userId) {
   if (!url2.startsWith("/api/photos/")) return false;
   const id2 = url2.slice("/api/photos/".length);
   return (await s.photos()).some((x) => x.id === id2 && x.ownerId === userId);
 }
 __name(ownedPhoto, "ownedPhoto");
+
+// server/seed.ts
+var programs = [
+  { id: "arts", name: "Arts & Humanities", short: "Arts" },
+  { id: "business", name: "Business Administration", short: "Business" },
+  { id: "engineering", name: "Engineering", short: "Engineering" },
+  { id: "education", name: "Education", short: "Education" }
+];
+var batches = [
+  { year: 2024, theme: "The next chapter", subtitle: "A year of new beginnings and lasting friendships." },
+  { year: 2022, theme: "Together, always", subtitle: "The stories we made, the people we became." },
+  { year: 2019, theme: "Made of moments", subtitle: "A collection of ordinary days worth remembering." },
+  { year: 2016, theme: "The golden days", subtitle: "Where all our journeys first crossed." }
+];
+var profiles = [
+  { id: "maya-chen", userId: "u-maya", name: "Maya Chen", year: 2024, programId: "arts", motto: "Make room for wonder.", bio: "Maya spent her college years documenting the small, beautiful things: late studio nights, campus walks, and the friends who made every deadline easier.", portrait: "/portraits/maya.jpg", visibility: "public", status: "published" },
+  { id: "jordan-reyes", userId: "u-jordan", name: "Jordan Reyes", year: 2024, programId: "engineering", motto: "Build things that bring people together.", bio: "Jordan still remembers the first project that failed spectacularly\u2014and the friends who stayed to rebuild it.", portrait: "/portraits/jordan.jpg", visibility: "public", status: "published" },
+  { id: "amelia-park", userId: "u-amelia", name: "Amelia Park", year: 2024, programId: "business", motto: "Begin before you feel ready.", bio: "A familiar face at student events, Amelia found her confidence by making space for others to shine.", portrait: "/portraits/amelia.jpg", visibility: "public", status: "published" },
+  { id: "leo-santos", userId: "u-leo", name: "Leo Santos", year: 2022, programId: "education", motto: "Keep learning, keep giving.", bio: "Leo credits his mentors and classmates for teaching him that good questions can change a life.", portrait: "/portraits/leo.jpg", visibility: "public", status: "published" },
+  { id: "nina-patel", userId: "u-nina", name: "Nina Patel", year: 2022, programId: "arts", motto: "Collect moments, not milestones.", bio: "From campus theatre to quiet library afternoons, Nina found a home in the stories people shared.", portrait: "/portraits/nina.jpg", visibility: "public", status: "published" },
+  { id: "alex-morgan", userId: "u-alex", name: "Alex Morgan", year: 2019, programId: "business", motto: "Stay curious and stay kind.", bio: "Alex remembers a campus full of possibility, and the people who turned it into a community.", portrait: "/portraits/alex.jpg", visibility: "public", status: "published" },
+  { id: "samira-ali", userId: "u-samira", name: "Samira Ali", year: 2019, programId: "engineering", motto: "There is always another way.", bio: "Samira found her people in the lab: patient problem solvers and generous friends.", portrait: "/portraits/samira.jpg", visibility: "public", status: "published" },
+  { id: "elijah-brooks", userId: "u-elijah", name: "Elijah Brooks", year: 2016, programId: "education", motto: "Leave a light on for someone else.", bio: "A classroom volunteer then and a teacher now, Elijah still carries the generosity of his batch.", portrait: "/portraits/elijah.jpg", visibility: "public", status: "published" }
+];
+var memories = [
+  { id: "m1", ownerId: "u-maya", author: "Maya Chen", year: 2024, schoolYear: "2023\u201324", title: "The last evening in the studio", body: "We stayed long after the final critique, sitting on the floor with paper cups of coffee. Nobody wanted to be the first to say goodbye.", image: "/memories/studio.jpg", caption: "One final evening together", visibility: "public", status: "published", featured: true, createdAt: "2024-06-08T12:00:00Z", reactionCount: 18, commentCount: 2 },
+  { id: "m2", ownerId: "u-leo", author: "Leo Santos", year: 2022, schoolYear: "2021\u201322", title: "Our little corner of the library", body: "Every exam week, the same table somehow became ours. We shared notes, snacks, and a promise that we would make it through together.", image: "/memories/library.jpg", caption: "The library after class", visibility: "public", status: "published", featured: true, createdAt: "2022-05-20T09:00:00Z", reactionCount: 12, commentCount: 1 },
+  { id: "m3", ownerId: "u-alex", author: "Alex Morgan", year: 2019, schoolYear: "2018\u201319", title: "When the whole campus sang", body: "The lights went out during the spring celebration, and instead of leaving, everyone started singing. It is still the moment I think of when someone says home.", image: "/memories/campus.jpg", caption: "A campus evening", visibility: "public", status: "published", featured: true, createdAt: "2019-04-14T09:00:00Z", reactionCount: 25, commentCount: 3 }
+];
+
+// server/store.ts
+var clone2 = /* @__PURE__ */ __name((value) => structuredClone(value), "clone");
+var MemoryStore = class {
+  static {
+    __name(this, "MemoryStore");
+  }
+  users = [];
+  sessions = [];
+  batchRows = clone2(batches);
+  programRows = clone2(programs);
+  profileRows = clone2(profiles);
+  memoryRows = clone2(memories);
+  verificationRows = [];
+  commentRows = [];
+  reportRows = [];
+  auditRows = [];
+  photoRows = [];
+  reactions = /* @__PURE__ */ new Set();
+  blobs = /* @__PURE__ */ new Map();
+  async userByEmail(email3) {
+    return this.users.find((x) => x.email === email3) || null;
+  }
+  async userById(id2) {
+    return this.users.find((x) => x.id === id2) || null;
+  }
+  async createUser(x) {
+    this.users.push(clone2(x));
+  }
+  async updateUser(x) {
+    this.users = this.users.map((v) => v.id === x.id ? clone2(x) : v);
+  }
+  async putSession(x) {
+    this.sessions.push(x);
+  }
+  async session(hash2) {
+    return this.sessions.find((x) => x.tokenHash === hash2 && new Date(x.expiresAt) > /* @__PURE__ */ new Date()) || null;
+  }
+  async deleteSession(hash2) {
+    this.sessions = this.sessions.filter((x) => x.tokenHash !== hash2);
+  }
+  async batches() {
+    return clone2(this.batchRows);
+  }
+  async programs() {
+    return clone2(this.programRows);
+  }
+  async saveBatch(x) {
+    this.batchRows = this.batchRows.filter((v) => v.year !== x.year).concat(clone2(x)).sort((a, b2) => b2.year - a.year);
+  }
+  async deleteBatch(year) {
+    this.batchRows = this.batchRows.filter((x) => x.year !== year);
+  }
+  async saveProgram(x) {
+    this.programRows = this.programRows.filter((v) => v.id !== x.id).concat(clone2(x));
+  }
+  async deleteProgram(id2) {
+    this.programRows = this.programRows.filter((v) => v.id !== id2);
+  }
+  async profiles() {
+    return clone2(this.profileRows);
+  }
+  async saveProfile(x) {
+    this.profileRows = this.profileRows.filter((v) => v.id !== x.id).concat(clone2(x));
+  }
+  async memories() {
+    return clone2(this.memoryRows);
+  }
+  async saveMemory(x) {
+    this.memoryRows = this.memoryRows.filter((v) => v.id !== x.id).concat(clone2(x));
+  }
+  async deleteMemory(id2) {
+    this.memoryRows = this.memoryRows.filter((v) => v.id !== id2);
+  }
+  async verifications() {
+    return clone2(this.verificationRows);
+  }
+  async saveVerification(x) {
+    this.verificationRows = this.verificationRows.filter((v) => v.id !== x.id).concat(clone2(x));
+  }
+  async comments(id2) {
+    return clone2(this.commentRows.filter((x) => !id2 || x.memoryId === id2));
+  }
+  async saveComment(x) {
+    this.commentRows = this.commentRows.filter((v) => v.id !== x.id).concat(clone2(x));
+  }
+  async reports() {
+    return clone2(this.reportRows);
+  }
+  async saveReport(x) {
+    this.reportRows = this.reportRows.filter((v) => v.id !== x.id).concat(clone2(x));
+  }
+  async audits() {
+    return clone2(this.auditRows);
+  }
+  async addAudit(x) {
+    this.auditRows.unshift(clone2(x));
+  }
+  async addDecision(actorId, targetType, targetId, action, note) {
+    this.auditRows.unshift({ id: crypto.randomUUID(), actor: actorId, action: "review " + action, target: targetType + ":" + targetId + (note ? " " + note : ""), createdAt: (/* @__PURE__ */ new Date()).toISOString() });
+  }
+  async photos() {
+    return clone2(this.photoRows);
+  }
+  async savePhoto(x) {
+    this.photoRows = this.photoRows.filter((v) => v.id !== x.id).concat(clone2(x));
+  }
+  async photoBytes(key) {
+    return this.blobs.get(key) || null;
+  }
+  async putPhotoBytes(key, data, type) {
+    this.blobs.set(key, { data, type });
+  }
+  async deletePhotoBytes(key) {
+    this.blobs.delete(key);
+  }
+  async reactionCount(id2) {
+    return [...this.reactions].filter((x) => x.startsWith(id2 + ":")).length;
+  }
+  async hasReacted(id2, userId) {
+    return this.reactions.has(id2 + ":" + userId);
+  }
+  async toggleReaction(id2, userId) {
+    const key = id2 + ":" + userId;
+    if (this.reactions.has(key)) {
+      this.reactions.delete(key);
+      return false;
+    }
+    this.reactions.add(key);
+    return true;
+  }
+};
 
 // node_modules/postgres/cf/polyfills.js
 import { EventEmitter } from "node:events";
@@ -25170,6 +25376,9 @@ var PgStore = class {
   async saveBatch(x) {
     await this.sql`INSERT INTO batches (year,theme,subtitle,cover_key) VALUES (${x.year},${x.theme},${x.subtitle},${x.cover || null}) ON CONFLICT (year) DO UPDATE SET theme=EXCLUDED.theme,subtitle=EXCLUDED.subtitle,cover_key=EXCLUDED.cover_key`;
   }
+  async deleteBatch(year) {
+    await this.sql`DELETE FROM batches WHERE year=${year}`;
+  }
   async saveProgram(x) {
     await this.sql`INSERT INTO programs (id,name,short) VALUES (${x.id},${x.name},${x.short}) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,short=EXCLUDED.short`;
   }
@@ -25262,9 +25471,12 @@ __name(mapUser, "mapUser");
 var connect = /* @__PURE__ */ __name((connectionString) => src_default(connectionString, { max: 5, fetch_types: false, prepare: true }), "connect");
 
 // worker/index.ts
+var demoStore = new MemoryStore();
 var app = createApi((c) => {
   const env = c.env;
+  if (!env.HYPERDRIVE) return demoStore;
   const store = new PgStore(connect(env.HYPERDRIVE.connectionString));
+  if (!env.PHOTOS) throw new Error("The PHOTOS R2 binding is required when Hyperdrive is configured.");
   store.putPhotoBytes = async (key, data, type) => {
     await env.PHOTOS.put(key, data, { httpMetadata: { contentType: type } });
   };
@@ -25276,7 +25488,10 @@ var app = createApi((c) => {
     await env.PHOTOS.delete(key);
   };
   return store;
-}, { demo: false, origin: /* @__PURE__ */ __name((c) => c.env.APP_ORIGIN, "origin") });
+}, { demo: /* @__PURE__ */ __name((c) => !c.env.HYPERDRIVE, "demo"), origin: /* @__PURE__ */ __name((c) => {
+  const configured = c.env.APP_ORIGIN?.trim();
+  return configured || new URL(c.req.url).origin;
+}, "origin") });
 var index_default = app;
 export {
   index_default as default

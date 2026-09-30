@@ -5,5 +5,7 @@
   "compatibility_date": "2026-09-30",
   "compatibility_flags": ["nodejs_compat"],
   "assets": { "directory": "./dist", "binding": "ASSETS", "not_found_handling": "single-page-application", "run_worker_first": ["/api/*"] },
-  "vars": { "APP_ORIGIN": "" }
+  "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "alumni-gallery-photos" }],
+  "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "REPLACE_WITH_REAL_HYPERDRIVE_UUID" }],
+  "vars": { "APP_ORIGIN": "https://your-domain.example" }
 }

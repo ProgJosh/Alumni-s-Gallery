@@ -6,6 +6,7 @@ const errors=[];
 const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
 page.on('pageerror',e=>errors.push(e.message));
 await page.goto('http://127.0.0.1:5173/',{waitUntil:'networkidle'});
+if(!(await page.locator('.site-header .brand-mark img').evaluate(img=>img.complete&&img.naturalWidth>0)))throw new Error('Brand mark failed to load');
 await page.screenshot({path:'artifacts/home-desktop.png',fullPage:true});
 await page.screenshot({path:'artifacts/home-desktop-view.jpg',type:'jpeg',quality:55});
 await page.getByRole('link',{name:'Alumni',exact:true}).click();
@@ -28,12 +29,30 @@ await page.getByRole('heading',{name:'The review desk.'}).waitFor({timeout:10000
 await page.getByRole('button',{name:'Years & programs'}).click();
 await page.getByRole('heading',{name:'Featured memories'}).waitFor({timeout:10000});
 await page.screenshot({path:'artifacts/admin-desktop.png',fullPage:true});
+const alumna=await browser.newPage({viewport:{width:1280,height:800}});
+alumna.on('pageerror',e=>errors.push(e.message));
+await alumna.goto('http://127.0.0.1:5173/join',{waitUntil:'networkidle'});
+await alumna.getByRole('tab',{name:'Sign in'}).click();
+await alumna.getByPlaceholder('you@example.com').fill('maya-chen@example.test');
+await alumna.getByPlaceholder('••••••••••••').fill('AlumniDemo2026!');
+await alumna.getByRole('button',{name:'Sign in',exact:true}).click();
+await alumna.getByRole('button',{name:'My memories'}).waitFor({timeout:10000});
+await alumna.getByRole('button',{name:'My memories'}).click();
+await alumna.getByPlaceholder('The evening we…').fill('A previewed memory');
+await alumna.getByPlaceholder('What do you remember most clearly?').fill('This is a preview of a college memory before submitting it.');
+await alumna.getByLabel('Your graduation year').selectOption('2024');
+await alumna.getByRole('button',{name:'Preview story'}).click();
+await alumna.getByRole('region',{name:'Memory preview'}).getByRole('heading',{name:'A previewed memory'}).waitFor();
+await alumna.getByRole('button',{name:'Save draft'}).click();
+await alumna.getByText('Draft saved privately.').waitFor({timeout:10000});
+await alumna.getByText('A previewed memory').waitFor();
 const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
 mobile.on('pageerror',e=>errors.push(e.message));
 await mobile.emulateMedia({reducedMotion:'reduce'});
 await mobile.goto('http://127.0.0.1:5173/',{waitUntil:'networkidle'});
 await mobile.screenshot({path:'artifacts/home-mobile.png',fullPage:true});
 await mobile.screenshot({path:'artifacts/home-mobile-view.jpg',type:'jpeg',quality:55});
+if(await mobile.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw new Error('Mobile horizontal overflow');
 await mobile.getByRole('button',{name:'Open menu'}).click();
 if(!(await mobile.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Memories'}).isVisible()))throw new Error('Mobile menu failed');
 await mobile.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Memories'}).click();
@@ -41,8 +60,4 @@ await mobile.getByRole('heading',{name:'Moments that stayed.'}).waitFor({timeout
 await mobile.screenshot({path:'artifacts/memories-mobile.png',fullPage:true});
 await browser.close();
 if(errors.length)throw new Error(errors.join('\n'));
-console.log('Browser checks passed: desktop search/profile/refresh, mobile menu/navigation, reduced motion.');
-
-
-
-
+console.log('Browser checks passed: desktop discovery and refresh, admin dashboard, alumni preview, mobile layout/navigation, reduced motion.');
