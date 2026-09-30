@@ -1,0 +1,22 @@
+export type Role = 'alumnus' | 'moderator' | 'administrator';
+export type Visibility = 'public' | 'alumni' | 'hidden';
+export type ReviewStatus = 'draft' | 'pending' | 'published' | 'rejected' | 'archived';
+export type Viewer = { id: string; name: string; role: Role; verified: boolean } | null;
+export type Program = { id: string; name: string; short: string };
+export type Batch = { year: number; theme: string; subtitle: string; cover?: string };
+export type Profile = { reviewNote?: string; id: string; userId: string; name: string; year: number; programId: string; motto: string; bio: string; portrait?: string; visibility: Visibility; status: ReviewStatus; links?: string[]; photos?: Photo[] };
+export type Photo = { reviewNote?: string; id: string; ownerId: string; key: string; url?: string; alt: string; caption: string; status: ReviewStatus; visibility: Visibility };
+export type Memory = { reviewNote?: string; id: string; ownerId: string; author: string; year: number; schoolYear?: string; title: string; body: string; image?: string; imageKey?: string; caption?: string; visibility: Visibility; status: ReviewStatus; featured: boolean; createdAt: string; reactionCount: number; reacted?: boolean; commentCount: number };
+export type Comment = { reviewNote?: string; id: string; memoryId: string; userId: string; author: string; body: string; status: ReviewStatus; createdAt: string };
+export type Report = { id: string; targetType: 'memory' | 'comment' | 'profile'; targetId: string; reason: string; reporterId: string; status: 'open' | 'resolved'; createdAt: string };
+export type Audit = { id: string; actor: string; action: string; target: string; createdAt: string };
+export type Verification = { reviewNote?: string; id: string; userId: string; name: string; year: number; programId: string; evidence: string; status: ReviewStatus; createdAt: string };
+export type AuthResponse = { viewer: Viewer };
+export type DirectoryResponse = { items: Profile[]; total: number; page: number; pages: number };
+export type Bootstrap = { viewer: Viewer; batches: Batch[]; programs: Program[]; featured: Memory[]; stats: { alumni: number; years: number; memories: number }; demo: boolean };
+export type ApiError = { error: string };
+export const canView = (visibility: Visibility, ownerId: string, viewer: Viewer) => visibility === 'public' || !!viewer && (viewer.id === ownerId || viewer.role === 'moderator' || viewer.role === 'administrator' || (visibility === 'alumni' && viewer.verified));
+export const canModerate = (viewer: Viewer) => !!viewer && (viewer.role === 'moderator' || viewer.role === 'administrator');
+
+
+

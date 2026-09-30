@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "alumni-gallery",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./dist", "binding": "ASSETS", "not_found_handling": "single-page-application", "run_worker_first": ["/api/*"] },
+  "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "alumni-gallery-photos" }],
+  "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "REPLACE_WITH_HYPERDRIVE_ID" }],
+  "vars": { "APP_ORIGIN": "https://REPLACE_WITH_YOUR_DOMAIN" }
+}
