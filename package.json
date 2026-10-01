@@ -39,5 +39,11 @@
     "vite": "^8.3.1",
     "vitest": "^5.0.3",
     "wrangler": "^4.144.0"
-  }
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "418253149b3649c29e3cb88353ba678d"
+    }
+  ]
 }
